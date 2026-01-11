@@ -17,7 +17,10 @@ class RadialGenerator extends Generator {
   getDefaultParams() {
     return {
       nodeCount: 12,
-      radius: 200,
+      innerRadius: 0,
+      outerRadius: 200,
+      rotation: 0,
+      jitter: 0,
       connectAdjacent: true
     };
   }
@@ -31,17 +34,33 @@ class RadialGenerator extends Generator {
     // Merge provided params with defaults
     const config = { ...this.getDefaultParams(), ...params };
 
+    // Store current params for display
+    this.params = config;
+
     // Clear existing diagram
     diagram.clear();
 
     const nodes = [];
     const angleStep = TWO_PI / config.nodeCount;
 
-    // Create nodes in a circle
+    // Create nodes in a circle or ring
     for (let i = 0; i < config.nodeCount; i++) {
-      const angle = i * angleStep;
-      const x = cos(angle) * config.radius;
-      const y = sin(angle) * config.radius;
+      const angle = i * angleStep + config.rotation;
+
+      // Calculate radius (for ring patterns, interpolate between inner and outer)
+      const radius = config.innerRadius === 0
+        ? config.outerRadius
+        : config.innerRadius + (config.outerRadius - config.innerRadius);
+
+      // Calculate base position
+      let x = cos(angle) * radius;
+      let y = sin(angle) * radius;
+
+      // Apply jitter if specified
+      if (config.jitter > 0) {
+        x += random(-config.jitter, config.jitter);
+        y += random(-config.jitter, config.jitter);
+      }
 
       const position = createVector(x, y);
       const node = new Node(position, `node_${i}`);

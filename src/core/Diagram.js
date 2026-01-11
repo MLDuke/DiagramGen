@@ -4,9 +4,15 @@ import CONFIG from '../config.js';
  * Diagram class - Container managing nodes, connections, and rendering
  */
 class Diagram {
-  constructor() {
+  /**
+   * @param {NodeRenderer} nodeRenderer - Renderer for nodes
+   * @param {ConnectionRenderer} connectionRenderer - Renderer for connections
+   */
+  constructor(nodeRenderer = null, connectionRenderer = null) {
     this.nodes = [];
     this.connections = [];
+    this.nodeRenderer = nodeRenderer;
+    this.connectionRenderer = connectionRenderer;
   }
 
   /**
@@ -37,11 +43,18 @@ class Diagram {
    * Render the diagram to the canvas
    */
   render() {
-    // Render connections
-    this._renderConnections();
+    // Use custom renderers if available, otherwise fall back to built-in rendering
+    if (this.connectionRenderer && this.nodeRenderer) {
+      // Render connections first (behind nodes)
+      this.connectionRenderer.render(this);
 
-    // Render nodes
-    this._renderNodes();
+      // Render nodes on top
+      this.nodeRenderer.render(this);
+    } else {
+      // Fallback to built-in rendering
+      this._renderConnections();
+      this._renderNodes();
+    }
   }
 
   /**
