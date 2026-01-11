@@ -2,8 +2,10 @@ import CONFIG from './config.js';
 import Diagram from './core/Diagram.js';
 import RadialGenerator from './generators/RadialGenerator.js';
 import PathGenerator from './generators/PathGenerator.js';
+import HybridGenerator from './generators/HybridGenerator.js';
 import NodeRenderer from './renderers/NodeRenderer.js';
 import ConnectionRenderer from './renderers/ConnectionRenderer.js';
+import Controls from './ui/Controls.js';
 
 // Global diagram instance
 let diagram;
@@ -11,9 +13,13 @@ let diagram;
 // Generator instances
 let radialGenerator;
 let pathGenerator;
+let hybridGenerator;
 
 // Current active generator
 let currentGenerator;
+
+// UI Controls
+let controls;
 
 /**
  * P5.js setup function - runs once at start
@@ -35,13 +41,98 @@ window.setup = function() {
   // Create generators
   radialGenerator = new RadialGenerator();
   pathGenerator = new PathGenerator();
+  hybridGenerator = new HybridGenerator();
 
   // Set initial generator
   currentGenerator = radialGenerator;
 
+  // Initialize UI controls
+  controls = new Controls();
+  controls.init(handleGeneratorChange, handleParameterChange, handleStyleChange);
+  controls.setGenerator('radial');
+  controls.updateSliders(currentGenerator);
+
   // Generate initial pattern with default parameters
   diagram.generate(currentGenerator);
 };
+
+/**
+ * Handle generator change from UI
+ * @param {string} generatorType - Type of generator ('radial', 'path', 'hybrid')
+ */
+function handleGeneratorChange(generatorType) {
+  switch (generatorType) {
+    case 'radial':
+      currentGenerator = radialGenerator;
+      break;
+    case 'path':
+      currentGenerator = pathGenerator;
+      break;
+    case 'hybrid':
+      currentGenerator = hybridGenerator;
+      break;
+  }
+
+  // Update sliders for new generator
+  controls.updateSliders(currentGenerator);
+
+  // Generate with new generator
+  diagram.generate(currentGenerator);
+}
+
+/**
+ * Handle parameter change from UI
+ * @param {string} param - Parameter name
+ * @param {number} value - New parameter value
+ */
+function handleParameterChange(param, value) {
+  // Generate with updated parameter
+  const params = {};
+  params[param] = value;
+  diagram.generate(currentGenerator, params);
+}
+
+/**
+ * Handle style change from UI
+ * @param {string} styleKey - Style property key
+ * @param {*} value - New style value
+ */
+function handleStyleChange(styleKey, value) {
+  // Update CONFIG based on styleKey
+  switch (styleKey) {
+    case 'nodeSize':
+      CONFIG.rendering.nodes.size = value;
+      break;
+    case 'nodeColor':
+      CONFIG.rendering.nodes.fill = value;
+      CONFIG.rendering.nodes.stroke = value;
+      break;
+    case 'nodeStrokeWeight':
+      CONFIG.rendering.nodes.strokeWeight = value;
+      break;
+    case 'connectionWeight':
+      CONFIG.rendering.connections.strokeWeight = value;
+      break;
+    case 'connectionColor':
+      CONFIG.rendering.connections.stroke = value;
+      break;
+    case 'connectionAlpha':
+      CONFIG.rendering.connections.alpha = value;
+      break;
+    case 'connectionType':
+      CONFIG.rendering.connections.type = value;
+      break;
+    case 'curveAmount':
+      CONFIG.rendering.connections.curveAmount = value;
+      break;
+    case 'backgroundColor':
+      CONFIG.canvas.backgroundColor = value;
+      break;
+  }
+
+  // Regenerate diagram with current parameters to apply new styles
+  diagram.generate(currentGenerator);
+}
 
 /**
  * P5.js draw function - runs continuously
@@ -59,95 +150,13 @@ window.draw = function() {
   diagram.render();
 
   pop();
-
-  // Display parameters in top-left corner
-  _displayParameters();
-};
-
-/**
- * Display current generator parameters
- * @private
- */
-function _displayParameters() {
-  push();
-
-  // Set text properties
-  fill(255);
-  textSize(12);
-  textAlign(LEFT, TOP);
-  noStroke();
-
-  // Position in top-left corner
-  const x = 20;
-  const y = 20;
-  const lineHeight = 16;
-
-  // Display generator name
-  text(`Generator: ${currentGenerator.name}`, x, y);
-
-  // Display key parameters based on generator type
-  if (currentGenerator.params) {
-    const params = currentGenerator.params;
-
-    if (currentGenerator === radialGenerator) {
-      text(`Nodes: ${params.nodeCount}`, x, y + lineHeight);
-      text(`Outer Radius: ${round(params.outerRadius)}`, x, y + lineHeight * 2);
-      text(`Jitter: ${round(params.jitter)}`, x, y + lineHeight * 3);
-      text(`Rotation: ${round(degrees(params.rotation))}°`, x, y + lineHeight * 4);
-    } else if (currentGenerator === pathGenerator) {
-      text(`Paths: ${params.pathCount}`, x, y + lineHeight);
-      text(`Nodes/Path: ${params.nodesPerPath}`, x, y + lineHeight * 2);
-      text(`Wave Amplitude: ${round(params.waveAmplitude)}`, x, y + lineHeight * 3);
-      text(`Frequency: ${params.waveFrequency.toFixed(3)}`, x, y + lineHeight * 4);
-    }
-  }
-
-  // Display keyboard shortcuts
-  text(`[P] Path Gen | [C] Radial Gen | [R/J/O] Random | [S] Save`, x, y + lineHeight * 6);
-
-  pop();
 }
 
 /**
  * P5.js keyPressed function - handles keyboard input
  */
 window.keyPressed = function() {
-  if (key === 'p' || key === 'P') {
-    // Switch to PathGenerator
-    currentGenerator = pathGenerator;
-    diagram.generate(currentGenerator);
-  } else if (key === 'c' || key === 'C') {
-    // Switch to RadialGenerator
-    currentGenerator = radialGenerator;
-    diagram.generate(currentGenerator);
-  } else if (key === 'r' || key === 'R') {
-    // Randomize primary count parameter (nodes or paths)
-    if (currentGenerator === radialGenerator) {
-      const randomNodeCount = floor(random(8, 25));
-      diagram.generate(currentGenerator, { nodeCount: randomNodeCount });
-    } else if (currentGenerator === pathGenerator) {
-      const randomPathCount = floor(random(3, 9));
-      diagram.generate(currentGenerator, { pathCount: randomPathCount });
-    }
-  } else if (key === 'j' || key === 'J') {
-    // Randomize variation parameter (jitter or wave amplitude)
-    if (currentGenerator === radialGenerator) {
-      const randomJitter = random(0, 21);
-      diagram.generate(currentGenerator, { jitter: randomJitter });
-    } else if (currentGenerator === pathGenerator) {
-      const randomAmplitude = random(50, 150);
-      diagram.generate(currentGenerator, { waveAmplitude: randomAmplitude });
-    }
-  } else if (key === 'o' || key === 'O') {
-    // Randomize size parameter (outer radius or nodes per path)
-    if (currentGenerator === radialGenerator) {
-      const randomRadius = random(150, 301);
-      diagram.generate(currentGenerator, { outerRadius: randomRadius });
-    } else if (currentGenerator === pathGenerator) {
-      const randomNodesPerPath = floor(random(6, 16));
-      diagram.generate(currentGenerator, { nodesPerPath: randomNodesPerPath });
-    }
-  } else if (key === 's' || key === 'S') {
+  if (key === 's' || key === 'S') {
     // Save canvas as PNG
     save('diagram.png');
   }

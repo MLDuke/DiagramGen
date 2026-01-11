@@ -1,4 +1,5 @@
 import CONFIG from '../config.js';
+import CurveUtils from '../utils/CurveUtils.js';
 
 /**
  * Diagram class - Container managing nodes, connections, and rendering
@@ -30,6 +31,20 @@ class Diagram {
    */
   generate(generator, params = {}) {
     generator.generate(this, params);
+
+    // Apply curve settings to all connections
+    this.applyCurveSettings();
+  }
+
+  /**
+   * Apply curve settings from CONFIG to all connections
+   */
+  applyCurveSettings() {
+    const config = CONFIG.rendering.connections;
+
+    for (const connection of this.connections) {
+      CurveUtils.applyCurveToConnection(connection, config);
+    }
   }
 
   /**

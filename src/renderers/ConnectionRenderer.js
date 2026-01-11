@@ -22,12 +22,17 @@ class ConnectionRenderer extends Renderer {
       // Get color from connection data or CONFIG
       const baseColor = connection.data.color || CONFIG.rendering.connections.stroke;
 
+      // Get alpha from connection data or CONFIG
+      const alpha = connection.data.alpha !== undefined
+        ? connection.data.alpha
+        : CONFIG.rendering.connections.alpha;
+
       // Apply stroke properties
       strokeWeight(weight);
 
       // Create color with alpha
       const c = color(baseColor);
-      c.setAlpha(180);
+      c.setAlpha(alpha);
       stroke(c);
 
       // Render based on connection type

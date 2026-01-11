@@ -14,13 +14,16 @@ const CONFIG = {
     nodes: {
       size: 8,
       fill: '#ffffff',
-      stroke: null,
-      strokeWeight: 0
+      stroke: '#ffffff',
+      strokeWeight: 2
     },
     connections: {
       stroke: '#ffffff',
       strokeWeight: 1.5,
-      fill: null
+      alpha: 180,
+      fill: null,
+      type: 'straight',
+      curveAmount: 50
     }
   }
 };
