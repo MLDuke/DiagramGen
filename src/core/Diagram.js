@@ -18,6 +18,15 @@ class Diagram {
   }
 
   /**
+   * Generate diagram using a generator
+   * @param {Generator} generator - The generator to use
+   * @param {Object} params - Parameters to pass to the generator
+   */
+  generate(generator, params = {}) {
+    generator.generate(this, params);
+  }
+
+  /**
    * Update diagram state (for animations and modifiers)
    */
   update() {
