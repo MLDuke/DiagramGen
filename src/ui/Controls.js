@@ -10,6 +10,7 @@ class Controls {
     this.sliders = {};
     this.styleControls = {};
     this.currentGenerator = null;
+    this.currentParams = {}; // Track current parameter values
     this.onGeneratorChange = null;
     this.onParameterChange = null;
     this.onStyleChange = null;
@@ -59,7 +60,8 @@ class Controls {
     const generators = [
       { value: 'radial', label: 'Radial' },
       { value: 'path', label: 'Path' },
-      { value: 'hybrid', label: 'Hybrid' }
+      { value: 'hybrid', label: 'Hybrid' },
+      { value: 'noisegrid', label: 'Noise Grid' }
     ];
 
     generators.forEach(gen => {
@@ -92,12 +94,14 @@ class Controls {
     this.sliderContainer.innerHTML = '';
     this.sliders = {};
 
-    const params = generator.getDefaultParams();
+    // Reset current params to generator defaults
+    this.currentParams = generator.getDefaultParams();
+
     const sliderConfigs = this._getSliderConfigs(generator.name);
 
     // Create sliders based on configuration
     sliderConfigs.forEach(config => {
-      if (params.hasOwnProperty(config.param)) {
+      if (this.currentParams.hasOwnProperty(config.param)) {
         this._createSlider(config);
       }
     });
@@ -133,6 +137,17 @@ class Controls {
         { param: 'nodesPerPath', label: 'Nodes per Path', min: 2, max: 12, step: 1 },
         { param: 'pathLength', label: 'Path Length', min: 100, max: 400, step: 10 },
         { param: 'pathCurve', label: 'Path Curve', min: 0, max: 150, step: 10 }
+      ],
+      NoiseGrid: [
+        { param: 'gridSize', label: 'Grid Size', min: 4, max: 16, step: 1 },
+        { param: 'spacing', label: 'Spacing', min: 40, max: 120, step: 5 },
+        { param: 'noiseScale', label: 'Noise Scale', min: 0.05, max: 0.5, step: 0.01 },
+        { param: 'noiseThreshold', label: 'Node Threshold', min: -0.5, max: 0.8, step: 0.05 },
+        { param: 'displacementAmount', label: 'Displacement', min: 0, max: 60, step: 5 },
+        { param: 'displacementScale', label: 'Displacement Scale', min: 0.05, max: 0.3, step: 0.01 },
+        { param: 'connectionRadius', label: 'Connection Radius', min: 80, max: 250, step: 10 },
+        { param: 'connectionProbability', label: 'Connection Probability', min: 0.1, max: 1.0, step: 0.05 },
+        { param: 'noiseSeed', label: 'Noise Seed', min: 0, max: 100, step: 1 }
       ]
     };
 
@@ -154,7 +169,7 @@ class Controls {
 
     // Value display
     const valueDisplay = this._createElement('span', 'slider-value');
-    const currentValue = this.currentGenerator.params[config.param];
+    const currentValue = this.currentParams[config.param];
     valueDisplay.textContent = this._formatValue(currentValue, config.param);
 
     // Slider
@@ -171,8 +186,12 @@ class Controls {
       const value = parseFloat(e.target.value);
       valueDisplay.textContent = this._formatValue(value, config.param);
 
+      // Update current params state
+      this.currentParams[config.param] = value;
+
       if (this.onParameterChange) {
-        this.onParameterChange(config.param, value);
+        // Pass all current params instead of just the changed one
+        this.onParameterChange(this.currentParams);
       }
     });
 

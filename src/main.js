@@ -3,6 +3,7 @@ import Diagram from './core/Diagram.js';
 import RadialGenerator from './generators/RadialGenerator.js';
 import PathGenerator from './generators/PathGenerator.js';
 import HybridGenerator from './generators/HybridGenerator.js';
+import NoiseGridGenerator from './generators/NoiseGridGenerator.js';
 import NodeRenderer from './renderers/NodeRenderer.js';
 import ConnectionRenderer from './renderers/ConnectionRenderer.js';
 import Controls from './ui/Controls.js';
@@ -14,6 +15,7 @@ let diagram;
 let radialGenerator;
 let pathGenerator;
 let hybridGenerator;
+let noiseGridGenerator;
 
 // Current active generator
 let currentGenerator;
@@ -42,6 +44,7 @@ window.setup = function() {
   radialGenerator = new RadialGenerator();
   pathGenerator = new PathGenerator();
   hybridGenerator = new HybridGenerator();
+  noiseGridGenerator = new NoiseGridGenerator();
 
   // Set initial generator
   currentGenerator = radialGenerator;
@@ -58,7 +61,7 @@ window.setup = function() {
 
 /**
  * Handle generator change from UI
- * @param {string} generatorType - Type of generator ('radial', 'path', 'hybrid')
+ * @param {string} generatorType - Type of generator ('radial', 'path', 'hybrid', 'noisegrid')
  */
 function handleGeneratorChange(generatorType) {
   switch (generatorType) {
@@ -71,6 +74,9 @@ function handleGeneratorChange(generatorType) {
     case 'hybrid':
       currentGenerator = hybridGenerator;
       break;
+    case 'noisegrid':
+      currentGenerator = noiseGridGenerator;
+      break;
   }
 
   // Update sliders for new generator
@@ -82,13 +88,10 @@ function handleGeneratorChange(generatorType) {
 
 /**
  * Handle parameter change from UI
- * @param {string} param - Parameter name
- * @param {number} value - New parameter value
+ * @param {Object} params - All current parameter values
  */
-function handleParameterChange(param, value) {
-  // Generate with updated parameter
-  const params = {};
-  params[param] = value;
+function handleParameterChange(params) {
+  // Generate with all current parameters
   diagram.generate(currentGenerator, params);
 }
 
